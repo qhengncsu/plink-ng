@@ -772,7 +772,7 @@ void RPgenReader::ReadCompactListNoDosage(uintptr_t** Mptr , IntegerVector varia
     uint32_t variant_idx = variant_subset[col_idx] - 1;
     if (static_cast<uint32_t>(variant_idx) >= raw_variant_ct) {
       char errstr_buf[256];
-      sprintf(errstr_buf, "variant_subset element out of range (%d; must be 1..%u)", variant_idx + 1, raw_variant_ct);
+      snprintf(errstr_buf, sizeof(errstr_buf), "variant_subset element out of range (%d; must be 1..%u)", variant_idx + 1, raw_variant_ct);
       stop(errstr_buf);
     }
     plink2::PglErr reterr = plink2::PgrGet(_subset_include_vec, _subset_index, _subset_size, variant_idx, _state_ptr, _pgv.genovec);
