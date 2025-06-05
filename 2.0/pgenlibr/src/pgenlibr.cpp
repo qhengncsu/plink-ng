@@ -778,7 +778,7 @@ void RPgenReader::ReadCompactListNoDosage(uintptr_t** Mptr , IntegerVector varia
     plink2::PglErr reterr = plink2::PgrGet(_subset_include_vec, _subset_index, _subset_size, variant_idx, _state_ptr, _pgv.genovec);
     if (reterr != plink2::kPglRetSuccess) {
       char errstr_buf[256];
-      sprintf(errstr_buf, "PgrGet() error %d", static_cast<int>(reterr));
+      snprintf(errstr_buf, sizeof(errstr_buf), "PgrGet() error %d", static_cast<int>(reterr));
       stop(errstr_buf);
     }
     uintptr_t* col_pointer = &((*Mptr)[col_idx * word_ct]);
@@ -984,6 +984,11 @@ RPgenReader::~RPgenReader() {
   Close();
 }
 
+static void finalizer(SEXP xptr) {
+    uintptr_t* p = (uintptr_t*)R_ExternalPtrAddr(xptr);
+    plink2::aligned_free(p);
+}
+
 // [[Rcpp::export]]
 SEXP getcompactptr(String filename, IntegerVector variant_subset,
                     Nullable<IntegerVector> sample_subset,  NumericVector xim,
@@ -1016,6 +1021,7 @@ SEXP getcompactptrfromPgen(List pgen, IntegerVector variant_subset, NumericVecto
     UNPROTECT(1);
     return xptr;
 }
+
 
 
 //' Opens a .pgen or PLINK 1 .bed file.
