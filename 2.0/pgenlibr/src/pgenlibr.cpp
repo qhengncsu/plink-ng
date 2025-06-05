@@ -50,7 +50,9 @@ public:
                           int variant_idx);
 
   void ReadIntList(IntegerMatrix buf, IntegerVector variant_subset);
-
+  
+  void ReadCompactListNoDosage(uintptr_t** Mptr , IntegerVector variant_subset, double *xm);
+    
   void ReadList(NumericMatrix buf, IntegerVector variant_subset, bool meanimpute);
 
   void FillVariantScores(NumericVector result, NumericVector weights, Nullable<IntegerVector> variant_subset);
@@ -748,6 +750,51 @@ void RPgenReader::ReadIntList(IntegerMatrix buf, IntegerVector variant_subset) {
   }
 }
 
+void RPgenReader::ReadCompactListNoDosage(uintptr_t** Mptr , IntegerVector variant_subset, double *xm) {
+  if (!_info_ptr) {
+    stop("pgen is closed");
+  }
+  // assume that buf has the correct dimensions
+  const uintptr_t vsubset_size = variant_subset.size();
+  const uint32_t raw_variant_ct = _info_ptr->raw_variant_ct;
+
+  const uint32_t cache_line_ct =
+        plink2::DivUp(_subset_size, plink2::kNypsPerCacheline);
+  const uint32_t word_ct = plink2::kWordsPerCacheline * cache_line_ct;
+  const uint32_t byte_ct = cache_line_ct * plink2::kCacheline;
+
+  if (plink2::cachealigned_malloc(byte_ct * vsubset_size, Mptr)) {
+      stop("Out of memory");
+  }
+
+
+  for (uintptr_t col_idx = 0; col_idx != vsubset_size; ++col_idx) {
+    uint32_t variant_idx = variant_subset[col_idx] - 1;
+    if (static_cast<uint32_t>(variant_idx) >= raw_variant_ct) {
+      char errstr_buf[256];
+      sprintf(errstr_buf, "variant_subset element out of range (%d; must be 1..%u)", variant_idx + 1, raw_variant_ct);
+      stop(errstr_buf);
+    }
+    plink2::PglErr reterr = plink2::PgrGet(_subset_include_vec, _subset_index, _subset_size, variant_idx, _state_ptr, _pgv.genovec);
+    if (reterr != plink2::kPglRetSuccess) {
+      char errstr_buf[256];
+      sprintf(errstr_buf, "PgrGet() error %d", static_cast<int>(reterr));
+      stop(errstr_buf);
+    }
+    uintptr_t* col_pointer = &((*Mptr)[col_idx * word_ct]);
+    memcpy(col_pointer, _pgv.genovec, byte_ct);
+    plink2::ZeroTrailingNyps(_subset_size, col_pointer);
+
+   // Get mean of this variant
+    STD_ARRAY_DECL(uint32_t, 4, genocounts);
+    plink2::GenoarrCountFreqsUnsafe(col_pointer, _subset_size, genocounts);
+    const double numer = plink2::u63tod(genocounts[1] + 2 * genocounts[2]);
+    const double denom = plink2::u31tod(_subset_size - genocounts[3]);
+    xm[col_idx] = numer/denom;
+  }
+}
+
+
 void RPgenReader::ReadList(NumericMatrix buf, IntegerVector variant_subset, bool meanimpute) {
   if (!_info_ptr) {
     stop("pgen is closed");
@@ -936,6 +983,40 @@ void RPgenReader::ReadAllelesPhasedInternal(int variant_idx) {
 RPgenReader::~RPgenReader() {
   Close();
 }
+
+// [[Rcpp::export]]
+SEXP getcompactptr(String filename, IntegerVector variant_subset,
+                    Nullable<IntegerVector> sample_subset,  NumericVector xim,
+                    Nullable<List> pvar = R_NilValue, Nullable<int> raw_sample_ct = R_NilValue) {
+    RPgenReader pgen;
+    pgen.Load(filename, pvar, raw_sample_ct, sample_subset);
+    uintptr_t* M;
+    pgen.ReadCompactListNoDosage(&M, variant_subset, &xim[0]);
+
+    SEXP xptr = R_MakeExternalPtr(M, R_NilValue, R_NilValue);
+    PROTECT(xptr);
+    R_RegisterCFinalizerEx(xptr, finalizer, TRUE);
+    UNPROTECT(1);
+    return xptr;
+}
+
+// [[Rcpp::export]]
+SEXP getcompactptrfromPgen(List pgen, IntegerVector variant_subset, NumericVector xim, IntegerVector nsample) {
+    if (strcmp_r_c(pgen[0], "pgen")) {
+      stop("pgen is not a pgen object");
+    }
+    uintptr_t* M;
+    XPtr<class RPgenReader> rp = as<XPtr<class RPgenReader> >(pgen[1]);
+    rp->ReadCompactListNoDosage(&M, variant_subset, &xim[0]);
+    nsample[0] = rp->GetSubsetSize();
+
+    SEXP xptr = R_MakeExternalPtr(M, R_NilValue, R_NilValue);
+    PROTECT(xptr);
+    R_RegisterCFinalizerEx(xptr, finalizer, TRUE);
+    UNPROTECT(1);
+    return xptr;
+}
+
 
 //' Opens a .pgen or PLINK 1 .bed file.
 //'
