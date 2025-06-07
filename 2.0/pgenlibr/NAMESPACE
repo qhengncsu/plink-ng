@@ -37,3 +37,7 @@ export(prepareFeatures)
 exportMethods(actualize)
 exportMethods(dim)
 exportMethods(setcovs)
+
+import(Rcpp)
+importFrom(Rcpp, evalCpp)
+useDynLib(pgenlibr, .registration=TRUE)
