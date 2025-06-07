@@ -10,6 +10,36 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// getcompactptr
+SEXP getcompactptr(String filename, IntegerVector variant_subset, Nullable<IntegerVector> sample_subset, NumericVector xim, Nullable<List> pvar, Nullable<int> raw_sample_ct);
+RcppExport SEXP _pgenlibr_getcompactptr(SEXP filenameSEXP, SEXP variant_subsetSEXP, SEXP sample_subsetSEXP, SEXP ximSEXP, SEXP pvarSEXP, SEXP raw_sample_ctSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< String >::type filename(filenameSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type variant_subset(variant_subsetSEXP);
+    Rcpp::traits::input_parameter< Nullable<IntegerVector> >::type sample_subset(sample_subsetSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type xim(ximSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type pvar(pvarSEXP);
+    Rcpp::traits::input_parameter< Nullable<int> >::type raw_sample_ct(raw_sample_ctSEXP);
+    rcpp_result_gen = Rcpp::wrap(getcompactptr(filename, variant_subset, sample_subset, xim, pvar, raw_sample_ct));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getcompactptrfromPgen
+SEXP getcompactptrfromPgen(List pgen, IntegerVector variant_subset, NumericVector xim, IntegerVector nsample);
+RcppExport SEXP _pgenlibr_getcompactptrfromPgen(SEXP pgenSEXP, SEXP variant_subsetSEXP, SEXP ximSEXP, SEXP nsampleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type pgen(pgenSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type variant_subset(variant_subsetSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type xim(ximSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nsample(nsampleSEXP);
+    rcpp_result_gen = Rcpp::wrap(getcompactptrfromPgen(pgen, variant_subset, xim, nsample));
+    return rcpp_result_gen;
+END_RCPP
+}
 // NewPgen
 SEXP NewPgen(String filename, Nullable<List> pvar, Nullable<int> raw_sample_ct, Nullable<IntegerVector> sample_subset);
 RcppExport SEXP _pgenlibr_NewPgen(SEXP filenameSEXP, SEXP pvarSEXP, SEXP raw_sample_ctSEXP, SEXP sample_subsetSEXP) {
@@ -361,6 +391,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_pgenlibr_getcompactptr", (DL_FUNC) &_pgenlibr_getcompactptr, 6},
+    {"_pgenlibr_getcompactptrfromPgen", (DL_FUNC) &_pgenlibr_getcompactptrfromPgen, 4},
     {"_pgenlibr_NewPgen", (DL_FUNC) &_pgenlibr_NewPgen, 4},
     {"_pgenlibr_GetRawSampleCt", (DL_FUNC) &_pgenlibr_GetRawSampleCt, 1},
     {"_pgenlibr_GetVariantCt", (DL_FUNC) &_pgenlibr_GetVariantCt, 1},

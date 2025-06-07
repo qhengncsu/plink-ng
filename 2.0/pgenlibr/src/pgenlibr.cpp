@@ -50,9 +50,9 @@ public:
                           int variant_idx);
 
   void ReadIntList(IntegerMatrix buf, IntegerVector variant_subset);
-  
+
   void ReadCompactListNoDosage(uintptr_t** Mptr , IntegerVector variant_subset, double *xm);
-    
+
   void ReadList(NumericMatrix buf, IntegerVector variant_subset, bool meanimpute);
 
   void FillVariantScores(NumericVector result, NumericVector weights, Nullable<IntegerVector> variant_subset);
@@ -989,7 +989,8 @@ static void finalizer(SEXP xptr) {
     plink2::aligned_free(p);
 }
 
-// [[Rcpp::export]]
+//' @export
+ // [[Rcpp::export]]
 SEXP getcompactptr(String filename, IntegerVector variant_subset,
                     Nullable<IntegerVector> sample_subset,  NumericVector xim,
                     Nullable<List> pvar = R_NilValue, Nullable<int> raw_sample_ct = R_NilValue) {
@@ -1005,7 +1006,8 @@ SEXP getcompactptr(String filename, IntegerVector variant_subset,
     return xptr;
 }
 
-// [[Rcpp::export]]
+//' @export
+ // [[Rcpp::export]]
 SEXP getcompactptrfromPgen(List pgen, IntegerVector variant_subset, NumericVector xim, IntegerVector nsample) {
     if (strcmp_r_c(pgen[0], "pgen")) {
       stop("pgen is not a pgen object");
