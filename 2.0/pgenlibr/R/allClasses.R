@@ -118,3 +118,11 @@ prepareFeatures <- function(pgen, vars, names){
   plinkmatrix <- pgenlibr::PlinkMatrixFromPgen(pgen, match(names, vars), variant_names=names)
   plinkmatrix
 }
+
+#' @export
+readIDsFromPsam <- function(psam){
+  df <- data.table::fread(psam) %>%
+    dplyr::rename('FID' = '#FID') %>%
+    dplyr::mutate(ID = paste(FID, IID, sep='_'))
+  df$ID
+}
